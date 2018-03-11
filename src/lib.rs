@@ -32,12 +32,16 @@ impl<T: Clone> UnboundedBroadcaster<T> {
     pub fn send(&self, msg: T) -> Result<(), BroadcastError<T>> {
         let mut sent = 0;
         let mut lock = self.sender.lock()?;
+        
         lock.retain(|chan| {
             match chan.unbounded_send(msg.clone()) {
-                Ok(()) => { sent += 1; false },
-                Err(_) => true,
+                Ok(()) => {
+                    sent += 1;
+                    true
+                },
+                Err(_) => false,
             }
-        });
+        });       
 
         if sent > 0 {
             Ok(())
